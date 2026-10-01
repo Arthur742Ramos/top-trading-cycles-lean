@@ -59,13 +59,16 @@ public theorem Core_unfold {n : Nat} (M : HousingMarket n) (x : Fin n → Fin n)
 members' endowed houses so that every member is weakly better off and at
 least one is strictly better off.  This is the notion for which the TTC
 allocation is the unique (bijective) element (Roth–Postlewaite 1977); the
-strong `Core` above can contain other allocations. -/
+strong `Core` above can contain other allocations.
+Preference orientation: `prefLE M i (y i) (x i)` means the deviation `y i`
+is weakly preferred to the status quo `x i` (smaller rank = more preferred),
+matching `Core`'s use of `prefLT M i (y i) (x i)`. -/
 public def StrictCore {n : Nat} (M : HousingMarket n) (x : Fin n → Fin n) : Prop :=
   ¬ ∃ (S : Finset (Fin n)) (y : Fin n → Fin n),
     S.Nonempty ∧
     Set.BijOn y (S : Set (Fin n)) (M.endow '' (S : Set (Fin n))) ∧
-    (∀ i ∈ S, prefLE M i (x i) (y i)) ∧
-    (∃ i ∈ S, prefLT M i (x i) (y i))
+    (∀ i ∈ S, prefLE M i (y i) (x i)) ∧
+    (∃ i ∈ S, prefLT M i (y i) (x i))
 
 -- Unfolding lemma for `StrictCore`, proved here where the definition is in-memory.
 public theorem StrictCore_unfold {n : Nat} (M : HousingMarket n)
@@ -73,17 +76,17 @@ public theorem StrictCore_unfold {n : Nat} (M : HousingMarket n)
     StrictCore M x ↔ ¬∃ (S : Finset (Fin n)) (y : Fin n → Fin n),
       S.Nonempty ∧
       Set.BijOn y (S : Set (Fin n)) (M.endow '' (S : Set (Fin n))) ∧
-      (∀ i ∈ S, prefLE M i (x i) (y i)) ∧
-      (∃ i ∈ S, prefLT M i (x i) (y i)) := Iff.rfl
+      (∀ i ∈ S, prefLE M i (y i) (x i)) ∧
+      (∃ i ∈ S, prefLT M i (y i) (x i)) := Iff.rfl
 
 public def ParetoOptimal {n : Nat} (M : HousingMarket n) (x : Fin n → Fin n) : Prop :=
   ¬ ∃ (z : Fin n → Fin n),
     Function.Bijective z ∧
-    (∀ i, prefLE M i (x i) (z i)) ∧
-    (∃ i, prefLT M i (x i) (z i))
+    (∀ i, prefLE M i (z i) (x i)) ∧
+    (∃ i, prefLT M i (z i) (x i))
 
 public def IndividuallyRational {n : Nat} (M : HousingMarket n)
     (x : Fin n → Fin n) : Prop :=
-  ∀ i, prefLE M i (M.endow i) (x i)
+  ∀ i, prefLE M i (x i) (M.endow i)
 
 end TTC
