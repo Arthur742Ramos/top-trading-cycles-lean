@@ -8,7 +8,7 @@ namespace TTC
 open scoped Classical
 
 -- Remaining agents after a given number of rounds.
-private noncomputable def rounds {n : Nat} (M : HousingMarket n) :
+@[expose] public noncomputable def rounds {n : Nat} (M : HousingMarket n) :
     Nat → Finset (Fin n) → Finset (Fin n)
   | 0, A => A
   | k + 1, A =>
@@ -118,7 +118,7 @@ private theorem iter_preserves {n : Nat} (M : HousingMarket n) (fuel : Nat)
       · have e1 : fuel + 1 = fuel.succ := rfl
         rw [ttcIter_succ M fuel A x, dite_eq_right h]
 
-private theorem mem_diff_exists {n : Nat} (M : HousingMarket n) (i : Fin n)
+public theorem mem_diff_exists {n : Nat} (M : HousingMarket n) (i : Fin n)
     {A : Finset (Fin n)} {fuel : Nat} :
     i ∈ A → A.card ≤ fuel →
       ∃ k, k < fuel ∧ i ∈ rounds M k A \ rounds M (k + 1) A := by
@@ -151,7 +151,7 @@ private theorem mem_diff_exists {n : Nat} (M : HousingMarket n) (i : Fin n)
   exact Finset.mem_sdiff.mpr ⟨h1, h2⟩
 
 -- An agent's assignment at its leaving round survives every later round.
-private theorem assign_of_mem_diff {n : Nat} (M : HousingMarket n) (k m : Nat)
+public theorem assign_of_mem_diff {n : Nat} (M : HousingMarket n) (k m : Nat)
     (A : Finset (Fin n)) (x : Fin n → Fin n) (i : Fin n) :
     (h : (rounds M k A).Nonempty) →
       i ∈ rounds M k A \ rounds M (k + 1) A →
@@ -300,7 +300,7 @@ public theorem ttcInCore {n : Nat} (M : HousingMarket n) :
   omega
 
 -- Monotonicity across arbitrarily many rounds.
-private theorem rounds_subset_of_le {n : Nat} (M : HousingMarket n)
+public theorem rounds_subset_of_le {n : Nat} (M : HousingMarket n)
     (A : Finset (Fin n)) {k l : Nat} (hkl : k ≤ l) :
     rounds M l A ⊆ rounds M k A := by
   induction l, hkl using Nat.le_induction with
@@ -327,7 +327,7 @@ private theorem rounds_next {n : Nat} (M : HousingMarket n) (k : Nat)
         _ = _ := congrArg₂ (fun B C : Finset (Fin n) => B \ C) hs.symm
           (ttcRound_fst_congr M hs.symm h2 h)
 
-private theorem allocation_eq_round {n : Nat} (M : HousingMarket n)
+public theorem allocation_eq_round {n : Nat} (M : HousingMarket n)
     (k : Nat) (hk : k < n) (h : (rounds M k Finset.univ).Nonempty)
     {c : Fin n} (hc : c ∈ (ttcRound M (rounds M k Finset.univ) h).1) :
     ttcAllocation M c = (ttcRound M (rounds M k Finset.univ) h).2 c := by
@@ -342,7 +342,7 @@ private theorem allocation_eq_round {n : Nat} (M : HousingMarket n)
   exact (ttcAllocation_apply M c).trans ha
 
 -- Every completed round permutes exactly the endowed houses of its agents.
-private theorem removed_image_eq {n : Nat} (M : HousingMarket n) (k : Nat)
+public theorem removed_image_eq {n : Nat} (M : HousingMarket n) (k : Nat)
     (hk : k ≤ n) :
     (Finset.univ \ rounds M k Finset.univ).image (ttcAllocation M) =
       (Finset.univ \ rounds M k Finset.univ).image (⇑M.endow) := by

@@ -273,6 +273,48 @@ private theorem ttcRound_assign_endow {n : Nat} (M : HousingMarket n)
   rw [ttcRound_assign_eq M hne hc]
   exact (roundPoint_endow M hne (ttcRound_sub M hne hc)).symm
 
+-- A nonempty subset of the selected cycle closed under its successor contains
+-- the entire cycle. This records that ttcRound removes one cycle at a time.
+public theorem ttcRound_subset_of_closed {n : Nat} (M : HousingMarket n)
+    {A : Finset (Fin n)} (hne : A.Nonempty) (S : Finset (Fin n))
+    (hinter : ∃ c ∈ (ttcRound M A hne).1, c ∈ S)
+    (hclosed : ∀ c ∈ (ttcRound M A hne).1, c ∈ S →
+      M.endow.symm ((ttcRound M A hne).2 c) ∈ S) :
+    (ttcRound M A hne).1 ⊆ S := by
+  let f := roundPoint M A hne
+  let a := Classical.choose hne
+  let cycle := roundCycle M A hne
+  have hstep : ∀ c ∈ cycleAgents cycle, c ∈ S → f c ∈ S := by
+    intro c hc hs
+    have he := ttcRound_assign_endow M hne hc
+    have hh := hclosed c hc hs
+    rw [he, Equiv.symm_apply_apply] at hh
+    exact hh
+  obtain ⟨c, hc, hs⟩ := hinter
+  change c ∈ cycleAgents cycle at hc
+  obtain ⟨j, hj, he⟩ := Finset.mem_image.mp hc
+  obtain ⟨hjlo, hjhi⟩ := Finset.mem_Ico.mp hj
+  have hjs : f^[j] a ∈ S := he ▸ hs
+  have propagate (b : Nat) (hb : cycle.first ≤ b) (hsb : f^[b] a ∈ S) :
+      ∀ k, b ≤ k → k ≤ cycle.last → f^[k] a ∈ S := by
+    intro k hbk
+    induction k, hbk using Nat.le_induction with
+    | base => exact fun _ => hsb
+    | succ k hbk ih =>
+        intro hk
+        rw [Function.iterate_succ_apply']
+        apply hstep _ (Finset.mem_image.mpr ⟨k,
+          Finset.mem_Ico.mpr ⟨by omega, by omega⟩, rfl⟩)
+        exact ih (by omega)
+  have hfirst : f^[cycle.first] a ∈ S := by
+    rw [← cycle.closes]
+    exact propagate j hjlo hjs cycle.last (by omega) le_rfl
+  intro d hd
+  change d ∈ cycleAgents cycle at hd
+  obtain ⟨k, hk, rfl⟩ := Finset.mem_image.mp hd
+  obtain ⟨hklo, hkhi⟩ := Finset.mem_Ico.mp hk
+  exact propagate cycle.first le_rfl hfirst k hklo (by omega)
+
 public theorem ttcRound_image_eq {n : Nat} (M : HousingMarket n)
     {A : Finset (Fin n)} (hne : A.Nonempty) :
     (ttcRound M A hne).1.image (ttcRound M A hne).2 =
@@ -373,6 +415,20 @@ public def Strategyproof (n : Nat) (w : Fin n ≃ Fin n) : Prop :=
     let x := ttcMechanism n w r
     let xNew := ttcMechanism n w (Function.update r i rNew)
     prefLE (HousingMarket.mk w r) i (x i) (xNew i)
+
+public theorem ttcMechanism_apply (n : Nat) (w : Fin n ≃ Fin n)
+    (r : Fin n → Fin n ≃ Fin n) (i : Fin n) :
+    ttcMechanism n w r i = ttcAllocation (HousingMarket.mk w r) i := by
+  unfold ttcMechanism
+  rfl
+
+public theorem Strategyproof_unfold (n : Nat) (w : Fin n ≃ Fin n) :
+    Strategyproof n w ↔ ∀ (r : Fin n → Fin n ≃ Fin n) (i : Fin n)
+      (rNew : Fin n ≃ Fin n), prefLE (HousingMarket.mk w r) i
+        (ttcAllocation (HousingMarket.mk w r) i)
+        (ttcAllocation (HousingMarket.mk w (Function.update r i rNew)) i) := by
+  unfold Strategyproof ttcMechanism
+  rfl
 
 end
 
