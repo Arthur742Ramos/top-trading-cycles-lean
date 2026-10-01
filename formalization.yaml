@@ -125,3 +125,14 @@ alignment:
       module: "TTC/Strategyproof.lean"
       status: "proven"
       note: "Binders (n : Nat) (w : Fin n ≃ Fin n); concludes Strategyproof n w: for every profile r, agent i, and misreport rNew, prefLE (HousingMarket.mk w r) i (x i) (xNew i) where x is the truthful TTC outcome and xNew the unilateral-misreport outcome."
+
+review:
+  status: "self-assessed"
+  reviewers:
+    - "none"
+  notes: >-
+    The implementation library and Solution are proof-hole-free under the
+    pinned local build. Challenge contains three deliberate Palomar statement
+    holes, excluded from the implementation sorry_count. Hosted Comparator
+    verification, Palomar editorial review, and registration are separate
+    states and are not inferred from local compilation.
