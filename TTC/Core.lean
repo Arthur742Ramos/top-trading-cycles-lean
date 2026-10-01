@@ -299,4 +299,181 @@ public theorem ttcInCore {n : Nat} (M : HousingMarket n) :
   rw [← hassign.2] at hbest
   omega
 
+-- Monotonicity across arbitrarily many rounds.
+private theorem rounds_subset_of_le {n : Nat} (M : HousingMarket n)
+    (A : Finset (Fin n)) {k l : Nat} (hkl : k ≤ l) :
+    rounds M l A ⊆ rounds M k A := by
+  induction l, hkl using Nat.le_induction with
+  | base => exact Finset.Subset.refl _
+  | succ l _ ih => exact Finset.Subset.trans (rounds_subset M l A) ih
+
+-- Express the next round using the agents currently remaining.
+private theorem rounds_next {n : Nat} (M : HousingMarket n) (k : Nat)
+    (A : Finset (Fin n)) (h : (rounds M k A).Nonempty) :
+    rounds M (k + 1) A = rounds M k A \ (ttcRound M (rounds M k A) h).1 := by
+  induction k generalizing A with
+  | zero => exact rounds_succ M 0 A h
+  | succ k ih =>
+      have hA : A.Nonempty := by
+        obtain ⟨i, hi⟩ := h
+        exact ⟨i, rounds_subset_of_le M A (Nat.zero_le _) hi⟩
+      have hs := rounds_succ M k A hA
+      have h2 : (rounds M k (A \ (ttcRound M A hA).1)).Nonempty := hs ▸ h
+      calc
+        _ = rounds M (k + 1) (A \ (ttcRound M A hA).1) :=
+          rounds_succ M (k + 1) A hA
+        _ = rounds M k (A \ (ttcRound M A hA).1) \
+            (ttcRound M (rounds M k (A \ (ttcRound M A hA).1)) h2).1 := ih _ h2
+        _ = _ := congrArg₂ (fun B C : Finset (Fin n) => B \ C) hs.symm
+          (ttcRound_fst_congr M hs.symm h2 h)
+
+private theorem allocation_eq_round {n : Nat} (M : HousingMarket n)
+    (k : Nat) (hk : k < n) (h : (rounds M k Finset.univ).Nonempty)
+    {c : Fin n} (hc : c ∈ (ttcRound M (rounds M k Finset.univ) h).1) :
+    ttcAllocation M c = (ttcRound M (rounds M k Finset.univ) h).2 c := by
+  have hmem : c ∈ rounds M k Finset.univ \ rounds M (k + 1) Finset.univ := by
+    rw [rounds_next M k Finset.univ h]
+    exact Finset.mem_sdiff.mpr ⟨ttcRound_sub M h hc, by
+      intro hm
+      exact (Finset.mem_sdiff.mp hm).2 hc⟩
+  have ha := (assign_of_mem_diff M k (n - k - 1) Finset.univ id c h hmem).2
+  have hfuel : (k + 1) + (n - k - 1) = n := by omega
+  rw [hfuel] at ha
+  exact (ttcAllocation_apply M c).trans ha
+
+-- Every completed round permutes exactly the endowed houses of its agents.
+private theorem removed_image_eq {n : Nat} (M : HousingMarket n) (k : Nat)
+    (hk : k ≤ n) :
+    (Finset.univ \ rounds M k Finset.univ).image (ttcAllocation M) =
+      (Finset.univ \ rounds M k Finset.univ).image (⇑M.endow) := by
+  classical
+  induction k with
+  | zero => simp [rounds]
+  | succ k ih =>
+      have hklt : k < n := by omega
+      have ih := ih (by omega)
+      by_cases h : (rounds M k Finset.univ).Nonempty
+      · have hsplit : Finset.univ \ rounds M (k + 1) Finset.univ =
+            (Finset.univ \ rounds M k Finset.univ) ∪
+              (ttcRound M (rounds M k Finset.univ) h).1 := by
+          rw [rounds_next M k Finset.univ h]
+          ext c
+          have hsub := ttcRound_sub M h (x := c)
+          simp only [Finset.mem_sdiff, Finset.mem_univ, true_and, Finset.mem_union]
+          tauto
+        have hcycle : (ttcRound M (rounds M k Finset.univ) h).1.image
+              (ttcAllocation M) =
+            (ttcRound M (rounds M k Finset.univ) h).1.image (⇑M.endow) := by
+          calc
+            _ = (ttcRound M (rounds M k Finset.univ) h).1.image
+                (ttcRound M (rounds M k Finset.univ) h).2 :=
+              Finset.image_congr (fun c hc => allocation_eq_round M k hklt h hc)
+            _ = _ := ttcRound_image_eq M h
+        rw [hsplit, Finset.image_union, Finset.image_union, ih, hcycle]
+      · have he : rounds M k Finset.univ = ∅ :=
+          Finset.not_nonempty_iff_eq_empty.mp h
+        have he1 : rounds M (k + 1) Finset.univ = ∅ :=
+          Finset.eq_empty_iff_forall_notMem.mpr (fun c hc => by
+            have hc0 := rounds_subset M k Finset.univ hc
+            rw [he] at hc0
+            exact Finset.notMem_empty c hc0)
+        simpa only [he, he1] using ih
+
+/-- Every bijective strict-core allocation equals the TTC allocation. -/
+public theorem ttcUniqueStrictCore {n : Nat} (M : HousingMarket n) (x : Fin n → Fin n)
+    (hxb : Function.Bijective x) (hx : StrictCore M x) :
+    x = ttcAllocation M := by
+  classical
+  by_contra hne
+  let D := Finset.univ.filter (fun i => x i ≠ ttcAllocation M i)
+  have hD : D.Nonempty := by
+    by_contra h
+    apply hne
+    funext i
+    by_contra hi
+    exact h ⟨i, Finset.mem_filter.mpr ⟨Finset.mem_univ i, hi⟩⟩
+  have hex : ∃ k, k < n ∧
+      ((rounds M k Finset.univ \ rounds M (k + 1) Finset.univ) ∩ D).Nonempty := by
+    obtain ⟨i, hiD⟩ := hD
+    obtain ⟨k, hk, hi⟩ := mem_diff_exists M i (Finset.mem_univ i)
+      (by rw [Finset.card_univ, Fintype.card_fin])
+    exact ⟨k, hk, i, Finset.mem_inter.mpr ⟨hi, hiD⟩⟩
+  let kstar := Nat.find hex
+  obtain ⟨hkstar, i, hi⟩ := Nat.find_spec hex
+  obtain ⟨himem, hiD⟩ := Finset.mem_inter.mp hi
+  have hR : (rounds M kstar Finset.univ).Nonempty :=
+    ⟨i, (Finset.mem_sdiff.mp himem).1⟩
+  have hagree : ∀ j, j ∉ rounds M kstar Finset.univ →
+      x j = ttcAllocation M j := by
+    intro j hj
+    by_contra hdiff
+    obtain ⟨k, hk, hjmem⟩ := mem_diff_exists M j (Finset.mem_univ j)
+      (by rw [Finset.card_univ, Fintype.card_fin])
+    have hklt : k < kstar := by
+      by_contra h
+      exact hj (rounds_subset_of_le M Finset.univ (by omega)
+        (Finset.mem_sdiff.mp hjmem).1)
+    have hmin : kstar ≤ k := Nat.find_min' hex ⟨hk, j,
+      Finset.mem_inter.mpr ⟨hjmem, Finset.mem_filter.mpr ⟨Finset.mem_univ j, hdiff⟩⟩⟩
+    omega
+  have hremaining : ∀ c ∈ rounds M kstar Finset.univ,
+      x c ∈ (rounds M kstar Finset.univ).image (⇑M.endow) := by
+    intro c hc
+    by_contra hnot
+    obtain ⟨j, hj⟩ := M.endow.surjective (x c)
+    have hjnot : j ∉ rounds M kstar Finset.univ := by
+      intro hjmem
+      exact hnot (Finset.mem_image.mpr ⟨j, hjmem, hj⟩)
+    have hout : x c ∈ (Finset.univ \ rounds M kstar Finset.univ).image
+        (⇑M.endow) :=
+      Finset.mem_image.mpr ⟨j, Finset.mem_sdiff.mpr ⟨Finset.mem_univ j, hjnot⟩, hj⟩
+    rw [← removed_image_eq M kstar (Nat.le_of_lt hkstar)] at hout
+    obtain ⟨j2, hj2, heq⟩ := Finset.mem_image.mp hout
+    have hj2not := (Finset.mem_sdiff.mp hj2).2
+    have hcj : c = j2 := hxb.1 (by rw [hagree j2 hj2not]; exact heq.symm)
+    exact hj2not (hcj ▸ hc)
+  let C := (ttcRound M (rounds M kstar Finset.univ) hR).1
+  have hiC : i ∈ C :=
+    (assign_of_mem_diff M kstar (n - kstar - 1) Finset.univ id i hR himem).1
+  have heq : ∀ c ∈ C, ttcAllocation M c =
+      (ttcRound M (rounds M kstar Finset.univ) hR).2 c :=
+    fun c hc => allocation_eq_round M kstar hkstar hR hc
+  have himage : C.image (ttcAllocation M) = C.image (⇑M.endow) := by
+    calc
+      _ = C.image (ttcRound M (rounds M kstar Finset.univ) hR).2 :=
+        Finset.image_congr heq
+      _ = _ := ttcRound_image_eq M hR
+  have hBij : Set.BijOn (ttcAllocation M) (↑C) (M.endow '' ↑C) := by
+    refine ⟨?_, ?_, ?_⟩
+    · intro c hc
+      have hh : ttcAllocation M c ∈ C.image (⇑M.endow) := by
+        rw [← himage]
+        exact Finset.mem_image.mpr ⟨c, hc, rfl⟩
+      rwa [Finset.mem_image] at hh
+    · intro c hc d hd hcd
+      apply ttcRound_assign_inj M hR hc hd
+      rw [← heq c hc, ← heq d hd]
+      exact hcd
+    · intro house hh
+      have hhfin : house ∈ C.image (⇑M.endow) := by
+        rwa [← Finset.coe_image, Finset.mem_coe] at hh
+      rw [← himage] at hhfin
+      exact Finset.mem_image.mp hhfin
+  have hweak : ∀ c ∈ C, prefLE M c (ttcAllocation M c) (x c) := by
+    intro c hc
+    have hbest := ttcRound_assign_best M hR hc
+      (hremaining c (ttcRound_sub M hR hc))
+    rw [← heq c hc] at hbest
+    exact (prefLE_unfold M c _ _).mpr hbest
+  have hstrict : prefLT M i (ttcAllocation M i) (x i) := by
+    rw [prefLT_unfold]
+    have hle := hweak i hiC
+    rw [prefLE_unfold] at hle
+    have hdiff : x i ≠ ttcAllocation M i := (Finset.mem_filter.mp hiD).2
+    have hne_rank : (M.rank i).symm (ttcAllocation M i) ≠ (M.rank i).symm (x i) :=
+      fun h => hdiff ((M.rank i).symm.injective h).symm
+    exact lt_of_le_of_ne hle hne_rank
+  exact (StrictCore_unfold M x).mp hx
+    ⟨C, ttcAllocation M, ttcRound_nonempty M hR, hBij, hweak, i, hiC, hstrict⟩
+
 end TTC
