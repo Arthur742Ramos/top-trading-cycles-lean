@@ -1,5 +1,7 @@
 module
 
+public import Mathlib.Logic.Equiv.Defs
+
 /-
 Scaffold statement surface for the Top Trading Cycles formalization.
 
