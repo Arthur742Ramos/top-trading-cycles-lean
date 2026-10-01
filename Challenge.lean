@@ -173,10 +173,9 @@ public theorem ttcInCore {n : Nat} (M : HousingMarket n) :
     Core M (ttcAllocation M) :=
   sorry
 
-/-- The TTC allocation is the unique bijective strict-core allocation
-(Roth-Postlewaite 1977): no coalition can weakly block it, and any bijective
-allocation that no coalition can weakly block equals it. -/
-public theorem ttcUniqueCore {n : Nat} (M : HousingMarket n)
+/-- Strict-core uniqueness: the TTC allocation is the unique bijective
+allocation that no coalition can weakly block. -/
+public theorem ttcUniqueStrictCore {n : Nat} (M : HousingMarket n)
     (x : Fin n → Fin n) (hxb : Function.Bijective x)
     (hx : StrictCore M x) : x = ttcAllocation M :=
   sorry

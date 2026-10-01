@@ -132,7 +132,7 @@ expected_definitions = [
 expected_theorems = [
     "TTC.Palomar.ttcTerminates",
     "TTC.Palomar.ttcInCore",
-    "TTC.Palomar.ttcUniqueCore"
+    "TTC.Palomar.ttcUniqueStrictCore"
 ]
 if config.get("challenge_module") != "Challenge":
     raise SystemExit("error: comparator challenge_module must be Challenge")
