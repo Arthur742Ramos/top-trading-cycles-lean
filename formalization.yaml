@@ -12,9 +12,12 @@ project:
     house b iff (rank i).symm a < (rank i).symm b. The comparator-checked
     results are TTC.Palomar.ttcTerminates: the TTC procedure (each remaining
     agent points to the owner of their favourite remaining house, each house
-    points to its owner, agents in directed cycles trade and leave) removes
-    every agent within n rounds, since each round deletes at least one
-    nonempty directed cycle from the finite functional pointing graph;
+    points to its owner; each round removes the single directed cycle
+    reachable from a chosen remaining agent, whose members trade and leave)
+    removes every agent within n rounds, since each round deletes at least
+    one nonempty directed cycle from the finite functional pointing graph.
+    This one-cycle-at-a-time form computes the same allocation as the
+    simultaneous version (see the remark in README.md);
     TTC.Palomar.ttcInCore: the TTC allocation is in the ordinary core, i.e. no
     coalition S can reallocate its own endowments (Set.BijOn y S (M.endow ''
     S)) so that every member strictly prefers the deviation;
@@ -104,7 +107,7 @@ alignment:
       lean: "TTC.ttcAllocation"
       module: "TTC/Algorithm.lean"
       status: "defined"
-      note: "Iterates ttcRound (point to the owner of the favourite remaining house; agents in directed cycles trade and leave) n times from Finset.univ."
+      note: "Iterates ttcRound (point to the owner of the favourite remaining house; remove the single cycle reachable from a chosen remaining agent) n times from Finset.univ."
     - source: "TTC terminates"
       lean: "TTC.Palomar.ttcTerminates"
       module: "Challenge.lean"

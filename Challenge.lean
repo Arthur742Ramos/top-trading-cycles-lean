@@ -152,10 +152,12 @@ public noncomputable def ttcIter {n : Nat} (M : HousingMarket n) :
         else (A, x))
       fuel
 
-/-- The allocation produced by Gale's top trading cycles algorithm: each agent
-points to the owner of their favourite remaining house, houses point to their
-owners, and agents in directed cycles trade and leave; repeated until nobody
-remains. -/
+/-- The allocation produced by Gale's top trading cycles algorithm, in
+one-cycle-at-a-time form: each agent points to the owner of their favourite
+remaining house, houses point to their owners, and the single directed cycle
+reachable from a chosen remaining agent trades and leaves; repeated until
+nobody remains. This computes the same allocation as the simultaneous version
+(see the remark in README.md). -/
 public noncomputable def ttcAllocation {n : Nat} (M : HousingMarket n) : Fin n → Fin n :=
   (ttcIter M n Finset.univ id).2
 

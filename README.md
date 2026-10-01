@@ -9,14 +9,27 @@ A housing market has `n` agents and `n` houses. Each agent owns exactly one
 house (the endowment is a bijection), and each agent has a **strict** preference
 order over houses.
 
-**The TTC algorithm** (due to David Gale). Repeat the following rounds until no
-agents remain:
+**The TTC algorithm** (due to David Gale), in the one-cycle-at-a-time form
+formalized here. Repeat the following rounds until no agents remain:
 
 1. Each remaining agent points to the owner of their favourite *remaining*
    house; each remaining house points to its owner.
 2. Every node has out-degree exactly 1, so the resulting directed graph contains
-   directed cycles. Every agent in a cycle receives the house they pointed to;
-   those agents and houses leave the market.
+   directed cycles. Select one of them: the cycle reachable from a chosen
+   remaining agent. Every agent in that cycle receives the house they pointed
+   to; those agents and houses leave the market.
+
+Remark: removing one cycle per round computes the same allocation as the
+textbook simultaneous version (all cycles trading at once). In fact *every*
+maximal sequence of single-cycle removals yields the same final allocation. The
+reason: a cycle disjoint from the removed one persists, since its members'
+favourite remaining houses are untouched, so every agent in a first-round cycle
+still receives their top choice among all houses; deleting those removal steps
+leaves a valid maximal removal sequence on the remaining submarket, and the
+claim follows by induction on the number of agents. All theorems below are
+proved in Lean for the one-cycle-at-a-time procedure as defined; this remark
+explains why that procedure computes the classical TTC allocation, so the
+classical attributions (Gale 1974, Roth 1982) apply to it.
 
 **Theorems on the comparator surface** (checked by the Palomar verifier
 against `Challenge.lean`).
