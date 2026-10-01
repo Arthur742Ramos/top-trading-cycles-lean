@@ -372,7 +372,7 @@ public def Strategyproof (n : Nat) (w : Fin n ≃ Fin n) : Prop :=
   ∀ (r : Fin n → (Fin n ≃ Fin n)) (i : Fin n) (rNew : Fin n ≃ Fin n),
     let x := ttcMechanism n w r
     let xNew := ttcMechanism n w (Function.update r i rNew)
-    prefLE (HousingMarket.mk w r) i (xNew i) (x i)
+    prefLE (HousingMarket.mk w r) i (x i) (xNew i)
 
 end
 
