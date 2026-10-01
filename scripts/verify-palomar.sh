@@ -126,6 +126,7 @@ expected_definitions = [
     "TTC.HousingMarket",
     "TTC.ttcAllocation",
     "TTC.Core",
+    "TTC.StrictCore",
 ]
 expected_theorems = [
     "TTC.Palomar.ttcTerminates",
@@ -155,8 +156,8 @@ for imports in challenge_imports:
                 or imported == "Mathlib" or imported.startswith("Mathlib.")):
             raise SystemExit(f"error: Challenge imports a project or unsupported module: {imported}")
 challenge_sorry_count = len(re.findall(r"\bsorry\b", challenge))
-if challenge_sorry_count != 5:
-    raise SystemExit(f"error: Challenge.lean must contain exactly 5 sorry tokens (scaffold: 2 definition + 3 theorem placeholders; M6 gives the definitions real bodies and the count becomes 3), found {challenge_sorry_count}")
+if challenge_sorry_count != 3:
+    raise SystemExit(f"error: Challenge.lean must contain exactly 3 sorry tokens (the 3 theorem placeholders; definitions have real bodies), found {challenge_sorry_count}")
 if re.search(r"\b(admit|axiom|unsafe)\b", challenge):
     raise SystemExit("error: Challenge.lean contains admit, axiom, or unsafe")
 
