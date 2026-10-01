@@ -476,4 +476,89 @@ public theorem ttcUniqueStrictCore {n : Nat} (M : HousingMarket n) (x : Fin n �
   exact (StrictCore_unfold M x).mp hx
     ⟨C, ttcAllocation M, ttcRound_nonempty M hR, hBij, hweak, i, hiC, hstrict⟩
 
+/-- The TTC allocation admits no Pareto improvement. -/
+public theorem ttcPareto {n : Nat} (M : HousingMarket n) :
+    ParetoOptimal M (ttcAllocation M) := by
+  classical
+  rw [ParetoOptimal_unfold]
+  rintro ⟨z, hzb, hall, j, hj⟩
+  have hequal : z = ttcAllocation M := by
+    by_contra hne
+    let D := Finset.univ.filter (fun i => z i ≠ ttcAllocation M i)
+    have hD : D.Nonempty := by
+      by_contra h
+      apply hne
+      funext i
+      by_contra hi
+      exact h ⟨i, Finset.mem_filter.mpr ⟨Finset.mem_univ i, hi⟩⟩
+    have hex : ∃ k, k < n ∧
+        ((rounds M k Finset.univ \ rounds M (k + 1) Finset.univ) ∩ D).Nonempty := by
+      obtain ⟨i, hiD⟩ := hD
+      obtain ⟨k, hk, hi⟩ := mem_diff_exists M i (Finset.mem_univ i)
+        (by rw [Finset.card_univ, Fintype.card_fin])
+      exact ⟨k, hk, i, Finset.mem_inter.mpr ⟨hi, hiD⟩⟩
+    let kstar := Nat.find hex
+    obtain ⟨hkstar, i, hi⟩ := Nat.find_spec hex
+    obtain ⟨himem, hiD⟩ := Finset.mem_inter.mp hi
+    have hR : (rounds M kstar Finset.univ).Nonempty :=
+      ⟨i, (Finset.mem_sdiff.mp himem).1⟩
+    have hagree : ∀ c, c ∉ rounds M kstar Finset.univ →
+        z c = ttcAllocation M c := by
+      intro c hc
+      by_contra hdiff
+      obtain ⟨k, hk, hcmem⟩ := mem_diff_exists M c (Finset.mem_univ c)
+        (by rw [Finset.card_univ, Fintype.card_fin])
+      have hklt : k < kstar := by
+        by_contra h
+        exact hc (rounds_subset_of_le M Finset.univ (by omega)
+          (Finset.mem_sdiff.mp hcmem).1)
+      have hmin : kstar ≤ k := Nat.find_min' hex ⟨hk, c,
+        Finset.mem_inter.mpr ⟨hcmem,
+          Finset.mem_filter.mpr ⟨Finset.mem_univ c, hdiff⟩⟩⟩
+      omega
+    have hremaining : ∀ c ∈ rounds M kstar Finset.univ,
+        z c ∈ (rounds M kstar Finset.univ).image (⇑M.endow) := by
+      intro c hc
+      by_contra hnot
+      obtain ⟨owner, howner⟩ := M.endow.surjective (z c)
+      have howner_not : owner ∉ rounds M kstar Finset.univ := by
+        intro hmem
+        exact hnot (Finset.mem_image.mpr ⟨owner, hmem, howner⟩)
+      have hout : z c ∈ (Finset.univ \ rounds M kstar Finset.univ).image
+          (⇑M.endow) := Finset.mem_image.mpr
+        ⟨owner, Finset.mem_sdiff.mpr ⟨Finset.mem_univ owner, howner_not⟩, howner⟩
+      rw [← removed_image_eq M kstar (Nat.le_of_lt hkstar)] at hout
+      obtain ⟨c2, hc2, heq⟩ := Finset.mem_image.mp hout
+      have hc2not := (Finset.mem_sdiff.mp hc2).2
+      have hcc2 : c = c2 := hzb.1 (by rw [hagree c2 hc2not]; exact heq.symm)
+      exact hc2not (hcc2 ▸ hc)
+    have hiC : i ∈ (ttcRound M (rounds M kstar Finset.univ) hR).1 :=
+      (assign_of_mem_diff M kstar (n - kstar - 1) Finset.univ id i hR himem).1
+    have hbest := ttcRound_assign_best M hR hiC
+      (hremaining i (ttcRound_sub M hR hiC))
+    rw [← allocation_eq_round M kstar hkstar hR hiC] at hbest
+    have hweak := (prefLE_unfold M i _ _).mp (hall i)
+    have heq : z i = ttcAllocation M i :=
+      (M.rank i).symm.injective (le_antisymm hweak hbest)
+    exact (Finset.mem_filter.mp hiD).2 heq
+  rw [hequal, prefLT_unfold] at hj
+  exact (lt_irrefl _) hj
+
+/-- Every agent weakly prefers its TTC assignment to its own endowment. -/
+public theorem ttcIR {n : Nat} (M : HousingMarket n) :
+    IndividuallyRational M (ttcAllocation M) := by
+  classical
+  rw [IndividuallyRational_unfold]
+  intro i
+  obtain ⟨k, hk, hmem⟩ := mem_diff_exists M i (Finset.mem_univ i)
+    (by rw [Finset.card_univ, Fintype.card_fin])
+  have h : (rounds M k Finset.univ).Nonempty :=
+    ⟨i, (Finset.mem_sdiff.mp hmem).1⟩
+  have hiC := (assign_of_mem_diff M k (n - k - 1) Finset.univ id i h hmem).1
+  have hendow : M.endow i ∈ (rounds M k Finset.univ).image (⇑M.endow) :=
+    Finset.mem_image.mpr ⟨i, (Finset.mem_sdiff.mp hmem).1, rfl⟩
+  have hbest := ttcRound_assign_best M h hiC hendow
+  rw [← allocation_eq_round M k hk h hiC] at hbest
+  exact (prefLE_unfold M i _ _).mpr hbest
+
 end TTC
