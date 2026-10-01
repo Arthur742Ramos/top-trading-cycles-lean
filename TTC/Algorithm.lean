@@ -310,13 +310,17 @@ public theorem ttcRound_card_lt {n : Nat} (M : HousingMarket n)
   omega
 
 public noncomputable def ttcIter {n : Nat} (M : HousingMarket n) :
-    Nat → Finset (Fin n) → (Fin n → Fin n) → Finset (Fin n) × (Fin n → Fin n)
-  | 0, A, x => (A, x)
-  | fuel + 1, A, x =>
-      if h : A.Nonempty then
-        let (C, assign) := ttcRound M A h
-        ttcIter M fuel (A \ C) (fun i => if i ∈ C then assign i else x i)
-      else (A, x)
+    Nat → Finset (Fin n) → (Fin n → Fin n) → Finset (Fin n) × (Fin n → Fin n) :=
+  fun fuel =>
+    Nat.rec (motive := fun _ => Finset (Fin n) → (Fin n → Fin n) →
+        Finset (Fin n) × (Fin n → Fin n))
+      (fun A x => (A, x))
+      (fun _ ih A x =>
+        if h : A.Nonempty then
+          let (C, assign) := ttcRound M A h
+          ih (A \ C) (fun i => if i ∈ C then assign i else x i)
+        else (A, x))
+      fuel
 
 public noncomputable def ttcAllocation {n : Nat} (M : HousingMarket n) : Fin n → Fin n :=
   (ttcIter M n Finset.univ id).2
@@ -343,12 +347,12 @@ public theorem ttcAllocation_apply {n : Nat} (M : HousingMarket n) (i : Fin n) :
     ttcAllocation M i = (ttcIter M n Finset.univ id).2 i :=
   ttcAllocation_apply_private M i
 
--- Unfolding equations for `ttcIter`, exported as theorems because the
--- auto-generated equation lemmas do not persist in the olean.
+-- Unfolding equations for `ttcIter`, proved by unfolding the `Nat.rec` definition.
 public theorem ttcIter_zero {n : Nat} (M : HousingMarket n)
     (A : Finset (Fin n)) (x : Fin n → Fin n) :
-    ttcIter M 0 A x = (A, x) :=
-  ttcIter.eq_1 M A x
+    ttcIter M 0 A x = (A, x) := by
+  unfold ttcIter
+  rfl
 
 public theorem ttcIter_succ {n : Nat} (M : HousingMarket n) (fuel : Nat)
     (A : Finset (Fin n)) (x : Fin n → Fin n) :
@@ -357,8 +361,8 @@ public theorem ttcIter_succ {n : Nat} (M : HousingMarket n) (fuel : Nat)
         ttcIter M fuel (A \ (ttcRound M A h).1)
           (fun i => if i ∈ (ttcRound M A h).1 then (ttcRound M A h).2 i else x i)
       else (A, x) := by
-  have e1 : fuel + 1 = fuel.succ := rfl
-  rw [e1, ttcIter.eq_2]
+  unfold ttcIter
+  rfl
 
 public def ttcMechanism (n : Nat) (w : Fin n ≃ Fin n)
     (r : Fin n → (Fin n ≃ Fin n)) : Fin n → Fin n :=

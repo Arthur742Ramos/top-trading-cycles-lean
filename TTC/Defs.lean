@@ -41,6 +41,9 @@ public theorem prefLT_unfold {n : Nat} (M : HousingMarket n) (i a b : Fin n) :
 public def prefLE {n : Nat} (M : HousingMarket n) (i a b : Fin n) : Prop :=
   (M.rank i).symm a ≤ (M.rank i).symm b
 
+public theorem prefLE_unfold {n : Nat} (M : HousingMarket n) (i a b : Fin n) :
+    prefLE M i a b ↔ (M.rank i).symm a ≤ (M.rank i).symm b := Iff.rfl
+
 public def Core {n : Nat} (M : HousingMarket n) (x : Fin n → Fin n) : Prop :=
   ¬ ∃ (S : Finset (Fin n)) (y : Fin n → Fin n),
     S.Nonempty ∧
@@ -85,8 +88,19 @@ public def ParetoOptimal {n : Nat} (M : HousingMarket n) (x : Fin n → Fin n) :
     (∀ i, prefLE M i (z i) (x i)) ∧
     (∃ i, prefLT M i (z i) (x i))
 
+public theorem ParetoOptimal_unfold {n : Nat} (M : HousingMarket n)
+    (x : Fin n → Fin n) :
+    ParetoOptimal M x ↔ ¬∃ (z : Fin n → Fin n),
+      Function.Bijective z ∧
+      (∀ i, prefLE M i (z i) (x i)) ∧
+      (∃ i, prefLT M i (z i) (x i)) := Iff.rfl
+
 public def IndividuallyRational {n : Nat} (M : HousingMarket n)
     (x : Fin n → Fin n) : Prop :=
   ∀ i, prefLE M i (x i) (M.endow i)
+
+public theorem IndividuallyRational_unfold {n : Nat} (M : HousingMarket n)
+    (x : Fin n → Fin n) :
+    IndividuallyRational M x ↔ ∀ i, prefLE M i (x i) (M.endow i) := Iff.rfl
 
 end TTC

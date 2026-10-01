@@ -140,13 +140,17 @@ public noncomputable def ttcRound {n : Nat} (M : HousingMarket n)
   (C, assign)
 
 public noncomputable def ttcIter {n : Nat} (M : HousingMarket n) :
-    Nat → Finset (Fin n) → (Fin n → Fin n) → Finset (Fin n) × (Fin n → Fin n)
-  | 0, A, x => (A, x)
-  | fuel + 1, A, x =>
-      if h : A.Nonempty then
-        let (C, assign) := ttcRound M A h
-        ttcIter M fuel (A \ C) (fun i => if i ∈ C then assign i else x i)
-      else (A, x)
+    Nat → Finset (Fin n) → (Fin n → Fin n) → Finset (Fin n) × (Fin n → Fin n) :=
+  fun fuel =>
+    Nat.rec (motive := fun _ => Finset (Fin n) → (Fin n → Fin n) →
+        Finset (Fin n) × (Fin n → Fin n))
+      (fun A x => (A, x))
+      (fun _ ih A x =>
+        if h : A.Nonempty then
+          let (C, assign) := ttcRound M A h
+          ih (A \ C) (fun i => if i ∈ C then assign i else x i)
+        else (A, x))
+      fuel
 
 /-- The allocation produced by Gale's top trading cycles algorithm: each agent
 points to the owner of their favourite remaining house, houses point to their
