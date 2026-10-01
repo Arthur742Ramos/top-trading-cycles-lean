@@ -220,6 +220,22 @@ public theorem ttcRound_nonempty {n : Nat} (M : HousingMarket n)
     {A : Finset (Fin n)} (hne : A.Nonempty) : (ttcRound M A hne).1.Nonempty := by
   exact cycleAgents_nonempty (roundCycle M A hne)
 
+-- Congruence for ttcRound when the set is rewritten. Proved here where
+-- ttcRound is in-memory.
+public theorem ttcRound_fst_congr {n : Nat} (M : HousingMarket n)
+    {A A' : Finset (Fin n)} (hAA' : A = A')
+    (h : A.Nonempty) (h' : A'.Nonempty) :
+    (ttcRound M A h).1 = (ttcRound M A' h').1 := by
+  cases hAA'
+  rfl
+
+public theorem ttcRound_snd_congr {n : Nat} (M : HousingMarket n)
+    {A A' : Finset (Fin n)} (hAA' : A = A')
+    (h : A.Nonempty) (h' : A'.Nonempty) (i : Fin n) :
+    (ttcRound M A h).2 i = (ttcRound M A' h').2 i := by
+  cases hAA'
+  rfl
+
 public theorem ttcRound_sub {n : Nat} (M : HousingMarket n)
     {A : Finset (Fin n)} (hne : A.Nonempty) : (ttcRound M A hne).1 ⊆ A := by
   intro c hc
@@ -304,6 +320,45 @@ public noncomputable def ttcIter {n : Nat} (M : HousingMarket n) :
 
 public noncomputable def ttcAllocation {n : Nat} (M : HousingMarket n) : Fin n → Fin n :=
   (ttcIter M n Finset.univ id).2
+
+-- Unfolding lemma for `ttcAllocation`, proved here where `ttcIter` is still
+-- in-memory (its definition is opaque when imported). Private to avoid
+-- export requirements.
+private theorem ttcAllocation_eq_private {n : Nat} (M : HousingMarket n) :
+    ttcAllocation M = (ttcIter M n Finset.univ id).2 := rfl
+
+-- Helper to convert injectivity from ttcIter form to ttcAllocation form,
+-- proved here where the defeq is available.
+public theorem ttcAllocation_inj_of_iter_inj {n : Nat} (M : HousingMarket n)
+    (h : Function.Injective (ttcIter M n Finset.univ id).2) :
+    Function.Injective (ttcAllocation M) := h
+
+-- Application unfolding for `ttcAllocation`, proved here where `ttcIter`
+-- is in-memory. Private to avoid export requirements.
+private theorem ttcAllocation_apply_private {n : Nat} (M : HousingMarket n) (i : Fin n) :
+    ttcAllocation M i = (ttcIter M n Finset.univ id).2 i := rfl
+
+-- Public version via the private one (the private rfl works, public needs help).
+public theorem ttcAllocation_apply {n : Nat} (M : HousingMarket n) (i : Fin n) :
+    ttcAllocation M i = (ttcIter M n Finset.univ id).2 i :=
+  ttcAllocation_apply_private M i
+
+-- Unfolding equations for `ttcIter`, exported as theorems because the
+-- auto-generated equation lemmas do not persist in the olean.
+public theorem ttcIter_zero {n : Nat} (M : HousingMarket n)
+    (A : Finset (Fin n)) (x : Fin n → Fin n) :
+    ttcIter M 0 A x = (A, x) :=
+  ttcIter.eq_1 M A x
+
+public theorem ttcIter_succ {n : Nat} (M : HousingMarket n) (fuel : Nat)
+    (A : Finset (Fin n)) (x : Fin n → Fin n) :
+    ttcIter M (fuel + 1) A x =
+      if h : A.Nonempty then
+        ttcIter M fuel (A \ (ttcRound M A h).1)
+          (fun i => if i ∈ (ttcRound M A h).1 then (ttcRound M A h).2 i else x i)
+      else (A, x) := by
+  have e1 : fuel + 1 = fuel.succ := rfl
+  rw [e1, ttcIter.eq_2]
 
 public def ttcMechanism (n : Nat) (w : Fin n ≃ Fin n)
     (r : Fin n → (Fin n ≃ Fin n)) : Fin n → Fin n :=

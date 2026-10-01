@@ -15,6 +15,10 @@ public structure HousingMarket (n : Nat) where
 public def prefLT {n : Nat} (M : HousingMarket n) (i a b : Fin n) : Prop :=
   (M.rank i).symm a < (M.rank i).symm b
 
+-- Unfolding lemma for `prefLT`, proved here where the definition is in-memory.
+public theorem prefLT_unfold {n : Nat} (M : HousingMarket n) (i a b : Fin n) :
+    prefLT M i a b ↔ (M.rank i).symm a < (M.rank i).symm b := Iff.rfl
+
 public def prefLE {n : Nat} (M : HousingMarket n) (i a b : Fin n) : Prop :=
   (M.rank i).symm a ≤ (M.rank i).symm b
 
@@ -23,6 +27,14 @@ public def Core {n : Nat} (M : HousingMarket n) (x : Fin n → Fin n) : Prop :=
     S.Nonempty ∧
     Set.BijOn y (S : Set (Fin n)) (M.endow '' (S : Set (Fin n))) ∧
     ∀ i ∈ S, prefLT M i (y i) (x i)
+
+-- Unfolding lemma for `Core`, proved here where the definition is still
+-- in-memory (it is opaque when imported).
+public theorem Core_unfold {n : Nat} (M : HousingMarket n) (x : Fin n → Fin n) :
+    Core M x ↔ ¬∃ (S : Finset (Fin n)) (y : Fin n → Fin n),
+      S.Nonempty ∧
+      Set.BijOn y (S : Set (Fin n)) (M.endow '' (S : Set (Fin n))) ∧
+      ∀ i ∈ S, prefLT M i (y i) (x i) := Iff.rfl
 
 public def ParetoOptimal {n : Nat} (M : HousingMarket n) (x : Fin n → Fin n) : Prop :=
   ¬ ∃ (z : Fin n → Fin n),
