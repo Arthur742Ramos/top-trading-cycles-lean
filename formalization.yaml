@@ -1,0 +1,88 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: "v0.4"
+
+project:
+  name: "Gale's Top Trading Cycles (Shapley-Scarf Housing Market)"
+  description: >-
+    A Lean formalization of Gale's top trading cycles algorithm (1974) for the
+    Shapley-Scarf housing market. Finitely many agents (Fin n) each own exactly
+    one house (the endowment is a bijection endow : Fin n ≃ Fin n) and have
+    strict preferences over houses, given most-preferred-first as per-agent
+    permutations rank i : Fin n ≃ Fin n; agent i strictly prefers house a over
+    house b iff (rank i).symm a < (rank i).symm b. The formal results are
+    TTC.Palomar.ttcTerminates: the TTC procedure (each remaining agent points
+    to the owner of their favourite remaining house, each house points to its
+    owner, agents in directed cycles trade and leave) removes every agent
+    within n rounds, since each round deletes at least one nonempty directed
+    cycle from the finite functional pointing graph;
+    TTC.Palomar.ttcInCore: the TTC allocation is in the core, i.e. no
+    coalition S can reallocate its own endowments (Set.BijOn y S (M.endow ''
+    S)) so that every member strictly prefers the deviation;
+    TTC.Palomar.ttcUniqueCore: the core is a singleton, so the TTC allocation
+    is the unique core allocation (Roth-Postlewaite 1977). The library also
+    proves the TTC allocation Pareto optimal (a Pareto improvement by the
+    grand coalition would block), individually rational (each agent's TTC
+    house is weakly preferred to their endowment, since their own house is
+    always available until they trade), and strategyproof (Roth 1982: no
+    agent gains by misreporting preferences). The Palomar registry API was
+    searched on 2026-10-01 for "housing market top trading cycles TTC" and
+    returned no existing TTC formalization among 395 entries; this is a dated,
+    limited observation, not a universal prior-art claim, and will be
+    re-verified at packaging time.
+  authors: ["Arthur Freitas Ramos", "David Barros Hulak", "Ruy Jose Guerra Barretto de Queiroz"]
+  responsible_maintainers: ["Arthur Freitas Ramos", "David Barros Hulak", "Ruy Jose Guerra Barretto de Queiroz"]
+  license: "BSD-3-Clause"
+
+sources:
+  - title: "On cores and indivisibility"
+    authors: ["Lloyd S. Shapley", "Herbert Scarf"]
+    type: "article"
+    location: "Journal of Mathematical Economics 1(1), 23-37, 1974. https://doi.org/10.1016/0304-4068(74)90033-0"
+    relationship: "formalizes"
+    author_endorsement: "not-contacted"
+  - title: "The top trading cycles algorithm"
+    authors: ["David Gale"]
+    type: "unpublished"
+    location: "Attributed to David Gale; described in Shapley and Scarf (1974)."
+    relationship: "formalizes"
+    author_endorsement: "not-contacted"
+  - title: "Weak versus strong domination in a market with indivisible goods"
+    authors: ["Alvin E. Roth", "Andrew Postlewaite"]
+    type: "article"
+    location: "Journal of Mathematical Economics 4(2), 131-137, 1977. https://doi.org/10.1016/0304-4068(77)90004-0"
+    relationship: "formalizes"
+    author_endorsement: "not-contacted"
+  - title: "Incentive compatibility in a market with indivisible goods"
+    authors: ["Alvin E. Roth"]
+    type: "article"
+    location: "Economics Letters 9(2), 127-132, 1982. https://doi.org/10.1016/0165-1765(82)90103-9"
+    relationship: "formalizes"
+    author_endorsement: "not-contacted"
+
+related_formalizations: []
+
+classification:
+  arxiv: ["cs.GT", "econ.TH"]
+  msc2020: ["91B68"]
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["GPT-6.1 via Codex"]
+      framework: "Lean 4 v4.35.0-rc2 and Mathlib v4.35.0-rc2"
+
+status:
+  scope: >-
+    Scaffold (2026-10-01): repository created, Lean/Mathlib v4.35.0-rc2
+    project layout, Challenge.lean statement surface with the intended
+    comparator shapes (definitions and theorems as sorry placeholders),
+    comparator.json, verification script, and this metadata. Milestones M1
+    (core definitions: HousingMarket, TTC algorithm, ttcAllocation, Core,
+    ParetoOptimal, IndividuallyRational, Strategyproof) through M5 (Pareto
+    optimality, individual rationality, strategyproofness proofs) will fill
+    in the library under TTC/; M6 writes the final Challenge/Solution
+    packaging; M7 runs the full local verification replica and the official
+    lake comparator stage.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: ["propext", "Classical.choice", "Quot.sound"]

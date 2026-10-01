@@ -1,0 +1,18 @@
+name = "top-trading-cycles"
+version = "0.1.0"
+defaultTargets = ["TTC.Main", "Challenge", "Solution"]
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "v4.35.0-rc2"
+
+[[lean_lib]]
+name = "TTC"
+
+[[lean_lib]]
+name = "Challenge"
+moreLeanArgs = ["-Dwarn.sorry=false"]
+
+[[lean_lib]]
+name = "Solution"

@@ -1,0 +1,1 @@
+{"challenge_module":"Challenge","definition_names":["TTC.HousingMarket","TTC.ttcAllocation","TTC.Core"],"permitted_axioms":["propext","Classical.choice","Quot.sound"],"solution_module":"Solution","theorem_names":["TTC.Palomar.ttcTerminates","TTC.Palomar.ttcInCore","TTC.Palomar.ttcUniqueCore"]}
