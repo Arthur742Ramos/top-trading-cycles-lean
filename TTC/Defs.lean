@@ -34,15 +34,4 @@ public def IndividuallyRational {n : Nat} (M : HousingMarket n)
     (x : Fin n → Fin n) : Prop :=
   ∀ i, prefLE M i (M.endow i) (x i)
 
--- M1b will replace this body with the TTC allocation.
-public def ttcMechanism (n : Nat) (w : Fin n ≃ Fin n)
-    (r : Fin n → (Fin n ≃ Fin n)) : Fin n → Fin n :=
-  fun i => w i
-
-public def Strategyproof (n : Nat) (w : Fin n ≃ Fin n) : Prop :=
-  ∀ (r : Fin n → (Fin n ≃ Fin n)) (i : Fin n) (rNew : Fin n ≃ Fin n),
-    let x := ttcMechanism n w r
-    let xNew := ttcMechanism n w (Function.update r i rNew)
-    prefLE (HousingMarket.mk w r) i (xNew i) (x i)
-
 end TTC
