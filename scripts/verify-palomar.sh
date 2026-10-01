@@ -125,6 +125,7 @@ for name in module_files:
 expected_definitions = [
     "TTC.HousingMarket",
     "TTC.ttcAllocation",
+    "TTC.ttcIter",
     "TTC.Core",
     "TTC.StrictCore",
 ]
